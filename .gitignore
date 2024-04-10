@@ -9,3 +9,5 @@ venv/
 **.csv
 pyproject.toml
 test.py
+log.log
+main_copy.py
