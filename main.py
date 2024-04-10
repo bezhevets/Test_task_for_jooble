@@ -1,9 +1,7 @@
 import time
 
-import requests
-from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.common import StaleElementReferenceException
+from selenium.common import StaleElementReferenceException, NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
@@ -30,7 +28,11 @@ class PropertiesLinkScraper:
         self.driver = SeleniumDriver.get_driver()
 
     def next_page(self):
-        self.driver.find_element(By.CLASS_NAME, "next").click()
+        try:
+            self.driver.find_element(By.CLASS_NAME, "next").click()
+            return True
+        except NoSuchElementException:
+            return False
 
     def get_links_of_page(self):
         properties_links = self.driver.find_elements(
@@ -50,7 +52,8 @@ class PropertiesLinkScraper:
             except StaleElementReferenceException:
                 continue
 
-            self.next_page()
+            if self.next_page() is False:
+                break
 
         return links
 
