@@ -1,3 +1,6 @@
+import logging
+import os
+import sys
 import time
 
 from selenium import webdriver
@@ -8,6 +11,16 @@ from selenium.webdriver.common.by import By
 BASE_URL = "https://realtylink.org/en/properties~for-rent"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
 MAX_ADS = 60
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s]: %(message)s",
+    handlers=[
+        logging.FileHandler(os.path.join("log.log"), mode="w"),
+        logging.StreamHandler(sys.stdout),
+    ],
+)
 
 
 class SeleniumDriver:
@@ -36,6 +49,7 @@ class PropertiesLinkScraper(SeleniumDriver):
             self.driver.find_element(By.CLASS_NAME, "next").click()
             return True
         except NoSuchElementException:
+            logging.error("Next page not found.")
             return False
 
     def get_links_of_page(self):
@@ -52,7 +66,8 @@ class PropertiesLinkScraper(SeleniumDriver):
             time.sleep(0.25)
             try:
                 links.extend(self.get_links_of_page())
-            except StaleElementReferenceException:
+            except StaleElementReferenceException as er:
+                logging.error(f"Error: {er}. Iteration skipped.")
                 continue
 
             if self.next_page() is False:
@@ -64,10 +79,9 @@ class PropertiesLinkScraper(SeleniumDriver):
 def get_all_links():
     with PropertiesLinkScraper() as scraper:
 
+        logging.info("Started scraping links of ads...")
         list_links = scraper.get_list_links()
-        print(list_links)
-        print(len(list_links))
-        print(len(set(list_links)))
+        logging.info(f"Finish. Unique links received: {len(set(list_links))}")
 
 
 if __name__ == "__main__":
