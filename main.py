@@ -3,7 +3,6 @@ import time
 from selenium import webdriver
 from selenium.common import StaleElementReferenceException, NoSuchElementException
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 
 BASE_URL = "https://realtylink.org/en/properties~for-rent"
@@ -12,20 +11,25 @@ MAX_ADS = 60
 
 
 class SeleniumDriver:
-    _driver: WebDriver | None = None
-
-    @classmethod
-    def get_driver(cls) -> WebDriver:
-        return cls._driver
-
-    @classmethod
-    def set_driver(cls, new_driver: WebDriver) -> None:
-        cls._driver = new_driver
-
-
-class PropertiesLinkScraper:
     def __init__(self):
-        self.driver = SeleniumDriver.get_driver()
+        chrome_options = Options()
+
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument(f"user-agent={USER_AGENT}")
+
+        self.driver = webdriver.Chrome(options=chrome_options)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.driver.quit()
+
+
+class PropertiesLinkScraper(SeleniumDriver):
+
+    def __init__(self):
+        super().__init__()
 
     def next_page(self):
         try:
@@ -46,7 +50,6 @@ class PropertiesLinkScraper:
 
         while len(links) < MAX_ADS:
             time.sleep(0.25)
-
             try:
                 links.extend(self.get_links_of_page())
             except StaleElementReferenceException:
@@ -59,17 +62,12 @@ class PropertiesLinkScraper:
 
 
 def get_all_links():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_argument(f"user-agent={USER_AGENT}")
-    with webdriver.Chrome(options=chrome_options) as scraper:
-        SeleniumDriver.set_driver(scraper)
-        driver = PropertiesLinkScraper()
+    with PropertiesLinkScraper() as scraper:
 
-        list_links = driver.get_list_links()
+        list_links = scraper.get_list_links()
         print(list_links)
         print(len(list_links))
+        print(len(set(list_links)))
 
 
 if __name__ == "__main__":
