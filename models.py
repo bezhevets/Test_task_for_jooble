@@ -10,7 +10,6 @@ class Property:
     address: str
     description: str
     images: List[str]
-    creation_date: str
     price: int
     rooms: int
     square: int
