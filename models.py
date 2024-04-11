@@ -11,5 +11,5 @@ class Property:
     description: str
     images: List[str]
     price: int
-    rooms: int
+    rooms: dict
     square: int

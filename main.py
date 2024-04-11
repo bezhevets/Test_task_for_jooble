@@ -14,6 +14,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
 from models import Property
+from utils.data_utils import save_data_to_json
 
 BASE_URL = "https://realtylink.org/en/properties~for-rent"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
@@ -114,16 +115,16 @@ class PropertyDetail:
         bedroom_soup = soup.find("div", {"class": "col-lg-3 col-sm-6 cac"})
         bathroom_soup = soup.find("div", {"class": "col-lg-3 col-sm-6 sdb"})
 
-        amount_rooms = []
+        result = {"bedroom": 0, "bathroom": 0}
         if bathroom_soup:
             bathrooms = bathroom_soup.text.split()[0]
-            amount_rooms.append(int(bathrooms))
+            result["bathroom"] = int(bathrooms)
 
         if bedroom_soup:
             bedrooms = bedroom_soup.text.split()[0]
-            amount_rooms.append(int(bedrooms))
+            result["bedrooms"] = int(bedrooms)
 
-        return sum(amount_rooms)
+        return result
 
     def get_data(self, soup):
         address = soup.select_one('h2[itemprop="address"]').text.strip()
@@ -150,10 +151,7 @@ class PropertyDetail:
                 tasks = [
                     tg.create_task(self.get_property(link, client)) for link in links
                 ]
-
-        for task in tasks:
-            print(task.result())
-        return tasks
+        return [task.result() for task in tasks]
 
     def scrape_property(self, links: list):
         return asyncio.run(self.create_async_task(links=links))
@@ -168,7 +166,12 @@ def get_all_links():
 
     logging.info("Scrape properties...")
     properties = PropertyDetail().scrape_property(list_links)
-    logging.info(properties)
+
+    logging.info("Saving data...")
+    save_data_to_json(properties, "data.json")
+    logging.info(
+        f"Data saving is complete. The path to the file: {os.path.abspath('data.json')}"
+    )
 
 
 if __name__ == "__main__":
