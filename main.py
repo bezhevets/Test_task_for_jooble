@@ -13,6 +13,8 @@ from selenium.common import StaleElementReferenceException, NoSuchElementExcepti
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
+from models import Property
+
 BASE_URL = "https://realtylink.org/en/properties~for-rent"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
 MAX_ADS = 5
@@ -127,7 +129,7 @@ class PropertyDetail:
         address = soup.select_one('h2[itemprop="address"]').text.strip()
         return {
             "title": soup.select_one('span[data-id="PageTitle"]').text,
-            "region": address.split(",")[-2:],
+            "region": ", ".join(address.split(", ")[-2:]),
             "address": address,
             "description": self.get_property_description(soup),
             "images": self.get_property_images(soup),
@@ -140,7 +142,7 @@ class PropertyDetail:
         response = await client.get(link)
         soup = BeautifulSoup(response.content, "html.parser")
         property_data = self.get_data(soup)
-        return property_data
+        return Property(link=link, **property_data)
 
     async def create_async_task(self, links: list):
         async with httpx.AsyncClient(headers={"user-agent": USER_AGENT}) as client:
