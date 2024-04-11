@@ -22,7 +22,7 @@ def main() -> None:
     logging.info("Saving data...")
     save_data_to_json(properties, "data.json")
     logging.info(
-        f"Data saving is complete. The path to the file: {os.path.abspath('data.json')}"
+        f"Data saving is complete. The path to the file: {os.path.abspath('data')}"
     )
 
 

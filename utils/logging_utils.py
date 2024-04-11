@@ -8,7 +8,7 @@ def log_settings() -> None:
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s]: %(message)s",
         handlers=[
-            logging.FileHandler(os.path.join("log.log"), mode="w"),
+            logging.FileHandler(os.path.join("data", "log.log"), mode="w"),
             logging.StreamHandler(sys.stdout),
         ],
     )
