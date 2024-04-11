@@ -11,7 +11,9 @@ from models import Property
 
 
 class PropertyData:
-    def change_correct_size(self, url):
+
+    @staticmethod
+    def change_correct_size(url):
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
         query_params["w"] = ["1024"]
@@ -21,30 +23,36 @@ class PropertyData:
         new_url = urlunparse(parsed_url._replace(query=updated_query))
         return new_url
 
-    def get_property_title(self, soup):
+    @staticmethod
+    def get_property_title(soup) -> str:
         return soup.select_one('span[data-id="PageTitle"]').text
 
-    def get_property_address(self, soup):
+    @staticmethod
+    def get_property_address(soup) -> str:
         return soup.select_one('h2[itemprop="address"]').text.strip()
 
-    def get_property_region(self, address):
+    @staticmethod
+    def get_property_region(address) -> str:
         return ", ".join(address.split(", ")[-2:])
 
-    def get_property_description(self, soup):
+    @staticmethod
+    def get_property_description(soup) -> str | None:
         description_tag = soup.find("div", {"itemprop": "description"})
         return description_tag.text.strip() if description_tag else None
 
-    def get_property_images(self, soup):
+    def get_property_images(self, soup) -> list:
         soup2 = soup.find("div", {"class": "thumbnail last-child first-child"})
         script_tag = soup2.find("script").text
         data = json.loads(script_tag[script_tag.find("[") : script_tag.find("]") + 1])
         links = [self.change_correct_size(link) for link in data]
         return links
 
-    def get_property_price(self, soup):
+    @staticmethod
+    def get_property_price(soup) -> int:
         return int(soup.find("meta", {"itemprop": "price"})["content"])
 
-    def get_property_rooms(self, soup):
+    @staticmethod
+    def get_property_rooms(soup) -> dict:
         bedroom_soup = soup.find("div", {"class": "col-lg-3 col-sm-6 cac"})
         bathroom_soup = soup.find("div", {"class": "col-lg-3 col-sm-6 sdb"})
 
@@ -59,7 +67,8 @@ class PropertyData:
 
         return result
 
-    def get_property_square(self, soup):
+    @staticmethod
+    def get_property_square(soup) -> int:
         area_soup = soup.find("div", {"class": "col-lg-3 col-sm-6 carac-container"})
         area = area_soup.find("span").text.strip().split()[0]
         return int(area.replace(",", ""))
@@ -67,7 +76,7 @@ class PropertyData:
 
 class PropertyDetail(PropertyData):
 
-    def get_data(self, soup):
+    def get_data(self, soup) -> dict:
         address = self.get_property_address(soup)
         return {
             "title": self.get_property_title(soup),
@@ -80,7 +89,7 @@ class PropertyDetail(PropertyData):
             "square": self.get_property_square(soup),
         }
 
-    async def get_property(self, link, client):
+    async def get_property(self, link, client) -> Property:
         try:
             response = await client.get(link, timeout=5)
             soup = BeautifulSoup(response.content, "html.parser")
